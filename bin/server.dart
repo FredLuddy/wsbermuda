@@ -10,13 +10,14 @@ import 'package:shelf_route/shelf_route.dart';
 
 
 main(List<String> args) async {
-  var options = parseArgs(args);
+  var options = _parseArgs(args);
 
-  // router
+  // using shelf_route
   Router r = router(middleware: shelf.logRequests());
   r.add('/echo', ['GET'], _echoRequest, exactMatch: false);
+  r.add('/log', ['POST'], _log, exactMatch: false);
   // pub serve for transform and static files out of working dir
-  var rph = await getPubProxy(options['pubport'], options['dir']);
+  var rph = await _getPubProxy(options['pubport'], options['dir']);
   r.add('/', ['GET'], rph, exactMatch: false);
 
   io.serve(r.handler, '0.0.0.0', options['port']).then((server) {
@@ -28,8 +29,14 @@ shelf.Response _echoRequest(shelf.Request request) {
   return new shelf.Response.ok('Request for "${request.url}"');
 }
 
+Future<shelf.Response> _log(shelf.Request request) async {
+  var t = await request.readAsString();
+  print('[client] $t');
+  return new shelf.Response.ok('Received client log: $t');
+}
+
 // run pub serve and return a shelf proxy to the pub serve port
-Future<shelf.Handler> getPubProxy(port, workingDir) async {
+Future<shelf.Handler> _getPubProxy(port, workingDir) async {
   Process p = await Process.start("pub", ["serve", "--port", "$port"], workingDirectory: workingDir);
   p.stdout.transform(UTF8.decoder).transform(const LineSplitter()).listen((v) => print('[pub serve] $v'));
   p.stderr.transform(UTF8.decoder).transform(const LineSplitter()).listen((v) => print('[pub serve] $v'));
@@ -51,7 +58,7 @@ Future<shelf.Handler> getPubProxy(port, workingDir) async {
   return shelf_proxy.proxyHandler(Uri.parse('http://localhost:$port'));
 }
 
-parseArgs(List<String> args) {
+_parseArgs(List<String> args) {
   var options = {};
   var parser = new ArgParser()
     ..addOption('port', abbr: 'p', defaultsTo: '8080')
