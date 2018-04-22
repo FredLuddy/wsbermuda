@@ -8,7 +8,12 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_proxy/shelf_proxy.dart' as shelf_proxy;
 import 'package:shelf_route/shelf_route.dart';
 
-
+/// Using shelf_route, add a "pub serve" proxy to run in debug mode 
+/// under webstorm and vscode
+/// 
+/// pub serve will take care of building the assets and serving both static 
+/// and package: files
+/// 
 main(List<String> args) async {
   var options = _parseArgs(args);
 
@@ -25,10 +30,12 @@ main(List<String> args) async {
   });
 }
 
+// handle a simple HTTP path
 shelf.Response _echoRequest(shelf.Request request) {
   return new shelf.Response.ok('Request for "${request.url}"');
 }
 
+// XHR log from the client 
 Future<shelf.Response> _log(shelf.Request request) async {
   var t = await request.readAsString();
   print('[client] $t');
